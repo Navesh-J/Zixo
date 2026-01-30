@@ -1,0 +1,5 @@
+.idea
+application.yaml
+application.properties
+.env
+node_modules/
