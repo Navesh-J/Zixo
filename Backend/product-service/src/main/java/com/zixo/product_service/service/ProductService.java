@@ -37,9 +37,9 @@ public class ProductService {
         Optional<Product> existingProduct = repo.findById(id);
         if (existingProduct.isPresent()) {
             Product savedProduct = existingProduct.get();
-            savedProduct.setName(product.getName());
+            savedProduct.setProductName(product.getProductName());
             savedProduct.setPrice(product.getPrice());
-            savedProduct.setDescription(product.getDescription());
+            savedProduct.setProductDescription(product.getProductDescription());
             savedProduct.setStock(product.getStock());
             Product updatedProduct = repo.save(savedProduct);
             return ResponseEntity.ok(updatedProduct);
