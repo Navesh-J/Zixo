@@ -42,6 +42,6 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        return jwtService.generateToken(user.getUsername());
+        return jwtService.generateToken(user);
     }
 }

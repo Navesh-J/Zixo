@@ -1,5 +1,6 @@
 package com.zixo.auth_service.security;
 
+import com.zixo.auth_service.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -30,10 +31,11 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username) {
+    public String generateToken(User user) {
 
         return Jwts.builder()
-                .subject(username)
+                .subject(user.getUsername())
+                .claim("role",user.getRole().name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getKey(), Jwts.SIG.HS256)

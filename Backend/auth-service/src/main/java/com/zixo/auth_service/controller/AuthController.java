@@ -1,6 +1,7 @@
 package com.zixo.auth_service.controller;
 
 import com.zixo.auth_service.dto.AuthRequest;
+import com.zixo.auth_service.dto.AuthResponse;
 import com.zixo.auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
 
         String token = authService.login(request.getUsername(), request.getPassword());
 
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(new AuthResponse(token));
     }
 }
