@@ -18,8 +18,13 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String username;
+
     private LocalDateTime orderDate;
-    private String orderStatus;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;
+
     private double totalAmount;
 
     @OneToMany(cascade = CascadeType.ALL)

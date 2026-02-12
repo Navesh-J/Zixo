@@ -4,6 +4,7 @@ import com.zixo.order_service.dto.ProductResponse;
 import com.zixo.order_service.feign.ProductClient;
 import com.zixo.order_service.model.Order;
 import com.zixo.order_service.model.OrderItem;
+import com.zixo.order_service.model.OrderStatus;
 import com.zixo.order_service.repo.OrderRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,16 +32,17 @@ public class OrderService {
                         .build());
     }
 
-    public ResponseEntity<Order> placeOrder(List<OrderItem> orderItems) {
+    public ResponseEntity<Order> placeOrder(String username, List<OrderItem> orderItems) {
         double total = 0;
         for (OrderItem orderItem : orderItems) {
             ProductResponse product = productClient.getProductById(orderItem.getProductId());
             orderItem.setPrice(product.getPrice());
-            total = product.getPrice() * orderItem.getQuantity();
+            total += product.getPrice() * orderItem.getQuantity();
         }
         Order order = new Order();
+        order.setUsername(username);
         order.setOrderDate(LocalDateTime.now());
-        order.setOrderStatus("CREATED");
+        order.setOrderStatus(OrderStatus.CREATED);
         order.setItems(orderItems);
         order.setTotalAmount(total);
         return ResponseEntity.ok(orderRepo.save(order));

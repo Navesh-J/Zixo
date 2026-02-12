@@ -28,7 +28,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> placeOrder(@RequestBody List<OrderItem> orderItems) {
-        return orderService.placeOrder(orderItems);
+    public ResponseEntity<Order> placeOrder(@RequestHeader("X-Auth-User") String username, @RequestBody List<OrderItem> orderItems) {
+        return orderService.placeOrder(username,orderItems);
     }
 }

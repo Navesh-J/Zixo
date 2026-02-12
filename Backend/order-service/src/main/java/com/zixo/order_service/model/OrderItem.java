@@ -18,6 +18,7 @@ public class OrderItem {
     private Long id;
 
     private Long productId;
+    private String productName;
     private int quantity;
     private double price;
 }
