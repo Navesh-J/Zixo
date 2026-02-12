@@ -9,6 +9,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -53,7 +54,22 @@ public class GlobalJwtAuthFilter implements GlobalFilter {
             return unauthorized(exchange);
         }
 
-        return chain.filter(exchange);
+        // ✅ Extract claims AFTER validation
+        String username = jwtUtil.extractUsername(token);
+        String role = jwtUtil.extractRole(token);
+
+        // ✅ Mutate request and add headers
+        ServerHttpRequest mutatedRequest = request.mutate()
+                .header("X-User-Name", username)
+                .header("X-User-Role", role)
+                .build();
+
+        // ✅ Create new exchange with mutated request
+        ServerWebExchange mutatedExchange = exchange.mutate()
+                .request(mutatedRequest)
+                .build();
+
+        return chain.filter(mutatedExchange);
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange) {
