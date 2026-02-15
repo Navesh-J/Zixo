@@ -40,7 +40,7 @@ public class ProductService {
             savedProduct.setProductName(product.getProductName());
             savedProduct.setPrice(product.getPrice());
             savedProduct.setProductDescription(product.getProductDescription());
-            savedProduct.setStock(product.getStock());
+//            savedProduct.setStock(product.getStock());
             Product updatedProduct = repo.save(savedProduct);
             return ResponseEntity.ok(updatedProduct);
         }
