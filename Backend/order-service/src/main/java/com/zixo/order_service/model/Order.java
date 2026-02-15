@@ -27,7 +27,7 @@ public class Order {
 
     private double totalAmount;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     private List<OrderItem> items;
 }
