@@ -16,9 +16,8 @@ public class ProductService {
 
     private final ProductRepo repo;
 
-    public ResponseEntity<Product> createProduct(Product product) {
-        Product saved = repo.save(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public Product createProduct(Product product) {
+        return repo.save(product);
     }
 
     public ResponseEntity<List<Product>> getProducts() {
@@ -53,5 +52,9 @@ public class ProductService {
         }
         repo.deleteById(id);
         return ResponseEntity.notFound().build();
+    }
+
+    public List<Product> getBySeller(String username) {
+        return repo.findBySellerUsername(username);
     }
 }

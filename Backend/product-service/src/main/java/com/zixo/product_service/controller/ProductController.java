@@ -15,9 +15,10 @@ public class ProductController {
 
     private final ProductService service;
 
-    @PostMapping
-    public ResponseEntity<Product> create(@RequestBody Product product) {
-        return service.createProduct(product);
+    @PostMapping("/add")
+    public ResponseEntity<Product> create(@RequestHeader("X-User-Name") String username, @RequestBody Product product) {
+        product.setSellerUsername(username);
+        return ResponseEntity.ok(service.createProduct(product));
     }
 
     @GetMapping
@@ -25,14 +26,20 @@ public class ProductController {
         return service.getProducts();
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<Product>> getMyProducts(@RequestHeader("X-User-Name") String username) {
+        return ResponseEntity.ok(service.getBySeller(username));
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         return service.getProduct(id);
     }
 
     @PutMapping("/{id}")
-    public  ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return service.updateProduct(id,product);
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        return service.updateProduct(id, product);
     }
 
     @DeleteMapping("/{id}")
