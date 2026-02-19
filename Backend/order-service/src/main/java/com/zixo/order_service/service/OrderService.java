@@ -4,6 +4,7 @@ import com.zixo.order_service.dto.ProductResponse;
 import com.zixo.order_service.dto.StockRequest;
 import com.zixo.order_service.exception.InvalidOrderStateException;
 import com.zixo.order_service.exception.OrderNotFoundException;
+import com.zixo.order_service.exception.UnauthorizedAccessException;
 import com.zixo.order_service.exception.ValidationException;
 import com.zixo.order_service.feign.InventoryClient;
 import com.zixo.order_service.feign.ProductClient;
@@ -12,6 +13,7 @@ import com.zixo.order_service.model.OrderItem;
 import com.zixo.order_service.model.OrderStatus;
 import com.zixo.order_service.repo.OrderRepo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -27,14 +30,27 @@ public class OrderService {
     private final ProductClient productClient;
     private final InventoryClient inventoryClient;
 
-    public List<Order> getAlLOrders() {
+    public List<Order> getAllOrders() {
         return orderRepo.findAll();
     }
 
-    public Order getOrder(Long id) {
-        return orderRepo.findById(id)
+    public Order getOrder(String username, Long id) {
+
+        Order order = orderRepo.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
+
+        if (!order.getUsername()
+                .equals(username)) {
+            throw new UnauthorizedAccessException("Unauthorized access");
+        }
+
+        return order;
     }
+
+    public List<Order> getOrdersByUsername(String username) {
+        return orderRepo.findByUsername(username);
+    }
+
 
     private void reserveStock(OrderItem item) {
         StockRequest request = new StockRequest();
@@ -50,7 +66,8 @@ public class OrderService {
                 request.setProductId(item.getProductId());
                 request.setQuantity(item.getQuantity());
                 inventoryClient.releaseStock(request);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.error("Failed to release stock for product {}", item.getProductId(), e);
             }
         }
     }
@@ -84,7 +101,7 @@ public class OrderService {
     public Order placeOrder(String username, List<OrderItem> orderItems) {
         validateOrder(username, orderItems);
         double total = 0;
-        List<OrderItem> processedItems  = new ArrayList<>();
+        List<OrderItem> processedItems = new ArrayList<>();
         try {
             for (OrderItem item : orderItems) {
                 ProductResponse product = productClient.getProductById(item.getProductId());
@@ -104,10 +121,10 @@ public class OrderService {
 
             order = orderRepo.save(order);
 
-            for (OrderItem item : processedItems) {
-                confirmStock(item);
-            }
-            order.setOrderStatus(OrderStatus.COMPLETED);
+//            for (OrderItem item : processedItems) {
+//                confirmStock(item);
+//            }
+//            order.setOrderStatus(OrderStatus.COMPLETED);
 
             return order;
 
@@ -118,13 +135,22 @@ public class OrderService {
     }
 
     @Transactional
-    public Order cancelOrder(Long orderId) {
+    public Order cancelOrder(Long orderId, String username, String reason) {
 
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (order.getOrderStatus() != OrderStatus.COMPLETED) {
-            throw new InvalidOrderStateException("Only completed orders can be cancelled");
+        if (!order.getUsername()
+                .equals(username)) {
+            throw new UnauthorizedAccessException("Unauthorized");
+        }
+
+        if (reason == null || reason.isBlank()) {
+            throw new ValidationException("Cancellation reason required");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.COMPLETED || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new InvalidOrderStateException("Current Order cannot be cancelled");
         }
 
         for (OrderItem item : order.getItems()) {
@@ -135,8 +161,36 @@ public class OrderService {
         }
 
         order.setOrderStatus(OrderStatus.CANCELLED);
+        order.setCancellationReason(reason);
 
-        return order;
+        return orderRepo.save(order);
     }
 
+    // 🔥 DUMMY PAYMENT
+    @Transactional
+    public Order payOrder(Long orderId, String username) {
+
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        // 🔐 ownership
+        if (!order.getUsername()
+                .equals(username)) {
+            throw new UnauthorizedAccessException("Unauthorized");
+        }
+
+        // only reserved orders can be paid
+        if (order.getOrderStatus() != OrderStatus.INVENTORY_RESERVED) {
+            throw new InvalidOrderStateException("Invalid order state for payment");
+        }
+
+        // 🔥 confirm stock
+        for (OrderItem item : order.getItems()) {
+            confirmStock(item);
+        }
+
+        order.setOrderStatus(OrderStatus.COMPLETED);
+
+        return orderRepo.save(order);
+    }
 }
