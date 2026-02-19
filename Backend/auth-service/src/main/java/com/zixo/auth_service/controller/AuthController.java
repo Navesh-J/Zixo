@@ -22,7 +22,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody AuthRequest request) {
 
-        authService.register(request.getUsername(), request.getPassword());
+        authService.register(request.getUsername(), request.getPassword(), request.getRole());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("User registered successfully");

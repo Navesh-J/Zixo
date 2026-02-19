@@ -18,16 +18,24 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public void register(String username, String password) {
+    public void register(String username, String password, String role) {
 
         if (userRepo.existsByUsername(username)) {
             throw new UserAlreadyExistsException("User already exists");
         }
 
+        role = role.trim();
+
         User user = new User();
-        user.setUsername(username);
+        user.setUsername(username.toLowerCase());
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(Role.USER);
+        if ("SELLER".equalsIgnoreCase(role)) {
+            user.setRole(Role.SELLER);
+        } else if ("USER".equalsIgnoreCase(role)) {
+            user.setRole(Role.USER);
+        } else {
+            throw new IllegalArgumentException("Invalid role");
+        }
 
         userRepo.save(user);
     }

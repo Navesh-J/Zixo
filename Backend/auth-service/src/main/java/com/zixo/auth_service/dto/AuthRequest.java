@@ -11,4 +11,6 @@ public class AuthRequest {
     @NotBlank
     @Size(min = 6)
     private String password;
+    @NotBlank
+    private String role;
 }

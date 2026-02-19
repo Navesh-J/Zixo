@@ -57,6 +57,13 @@ public class GlobalJwtAuthFilter implements GlobalFilter {
         // ✅ Extract claims AFTER validation
         String username = jwtUtil.extractUsername(token);
         String role = jwtUtil.extractRole(token);
+        String path = request.getURI().getPath();
+
+        if (path.startsWith("/product-service/products/add") &&
+                !role.equals("SELLER")) {
+
+            return unauthorized(exchange);
+        }
 
         // ✅ Mutate request and add headers
         ServerHttpRequest mutatedRequest = request.mutate()
