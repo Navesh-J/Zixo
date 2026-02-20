@@ -33,6 +33,17 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUsername(username));
     }
 
+    @GetMapping("/seller/orders")
+    public ResponseEntity<List<Order>> getSellerOrders(@RequestHeader("X-User-Name") String username) {
+
+        return ResponseEntity.ok(orderService.getSellerOrders(username));
+    }
+
+    @GetMapping("/seller/analytics")
+    public ResponseEntity<?> getSellerAnalytics(@RequestHeader("X-User-Name") String username) {
+
+        return ResponseEntity.ok(orderService.getSellerAnalytics(username));
+    }
 
     @PostMapping
     public ResponseEntity<Order> placeOrder(@RequestHeader("X-User-Name") String username, @RequestBody List<@Valid OrderItem> orderItems) {
@@ -47,9 +58,7 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/pay")
-    public ResponseEntity<Order> payOrder(
-            @RequestHeader("X-User-Name") String username,
-            @PathVariable Long id) {
+    public ResponseEntity<Order> payOrder(@RequestHeader("X-User-Name") String username, @PathVariable Long id) {
 
         return ResponseEntity.ok(orderService.payOrder(id, username));
     }

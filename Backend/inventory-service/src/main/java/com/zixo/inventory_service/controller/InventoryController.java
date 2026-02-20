@@ -57,4 +57,16 @@ public class InventoryController {
         service.addStock(request.getProductId(),request.getQuantity());
         return ResponseEntity.ok("Stock Added");
     }
+
+    @PutMapping("/{productId}")
+    public ResponseEntity<String> updateStock(@PathVariable Long productId, @Valid @RequestBody StockRequest request) {
+        service.updateStock(productId,request);
+        return ResponseEntity.ok("Stock Updated");
+    }
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<String> deleteStock(@PathVariable Long productId) {
+        service.deleteStock(productId);
+        return ResponseEntity.ok("Stock Deleted");
+    }
 }

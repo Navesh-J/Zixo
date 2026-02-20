@@ -1,6 +1,8 @@
 package com.zixo.order_service.service;
 
 import com.zixo.order_service.dto.ProductResponse;
+import com.zixo.order_service.dto.ProductStats;
+import com.zixo.order_service.dto.SellerAnalyticsResponse;
 import com.zixo.order_service.dto.StockRequest;
 import com.zixo.order_service.exception.InvalidOrderStateException;
 import com.zixo.order_service.exception.OrderNotFoundException;
@@ -18,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,6 +53,63 @@ public class OrderService {
         return orderRepo.findByUsername(username);
     }
 
+    public List<Order> getSellerOrders(String username) {
+        return orderRepo.findOrdersBySeller(username);
+    }
+
+    public SellerAnalyticsResponse getSellerAnalytics(String username) {
+
+        List<Order> orders = orderRepo.findOrdersBySeller(username);
+
+        int totalOrders = 0;
+        double totalRevenue = 0;
+        int totalItemsSold = 0;
+
+        Map<Long, ProductStats> productStatsMap = new HashMap<>();
+
+        for (Order order : orders) {
+
+            boolean sellerInOrder = false;
+
+            for (OrderItem item : order.getItems()) {
+
+                if (!username.equals(item.getSellerUsername())) continue;
+
+                sellerInOrder = true;
+
+                double itemRevenue = item.getPrice() * item.getQuantity();
+
+                totalRevenue += itemRevenue;
+                totalItemsSold += item.getQuantity();
+
+                ProductStats stats = productStatsMap.computeIfAbsent(
+                        item.getProductId(),
+                        id -> new ProductStats(id, item.getProductName(), 0, 0.0)
+                );
+
+                stats.setQuantitySold(stats.getQuantitySold() + item.getQuantity());
+                stats.setRevenue(stats.getRevenue() + itemRevenue);
+            }
+
+            if (sellerInOrder) {
+                totalOrders++;
+            }
+        }
+
+        // 🔥 Top 5 products by revenue
+        List<ProductStats> topProducts = productStatsMap.values()
+                .stream()
+                .sorted((a, b) -> Double.compare(b.getRevenue(), a.getRevenue()))
+                .limit(5)
+                .toList();
+
+        return new SellerAnalyticsResponse(
+                totalOrders,
+                totalRevenue,
+                totalItemsSold,
+                topProducts
+        );
+    }
 
     private void reserveStock(OrderItem item) {
         StockRequest request = new StockRequest();
@@ -107,6 +166,7 @@ public class OrderService {
                 ProductResponse product = productClient.getProductById(item.getProductId());
                 item.setPrice(product.getPrice());
                 item.setProductName(product.getProductName());
+                item.setSellerUsername(product.getSellerUsername());
                 total += product.getPrice() * item.getQuantity();
                 reserveStock(item);
                 processedItems.add(item);

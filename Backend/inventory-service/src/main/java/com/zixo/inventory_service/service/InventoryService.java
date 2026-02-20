@@ -1,11 +1,13 @@
 package com.zixo.inventory_service.service;
 
+import com.zixo.inventory_service.dto.StockRequest;
 import com.zixo.inventory_service.exception.InsufficientStockException;
 import com.zixo.inventory_service.exception.InvalidAmount;
 import com.zixo.inventory_service.exception.InventoryAlreadyInitialized;
 import com.zixo.inventory_service.exception.InventoryNotFoundException;
 import com.zixo.inventory_service.model.Inventory;
 import com.zixo.inventory_service.repo.InventoryRepo;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -98,5 +100,19 @@ public class InventoryService {
 
     public Page<Inventory> getStocks(Pageable pageable) {
         return repo.findAll(pageable);
+    }
+
+    @Transactional
+    public void updateStock(Long productId, @Valid StockRequest request) {
+        Inventory inventory = getStock(productId);
+        inventory.setAvailableStock(request.getQuantity());
+        repo.save(inventory);
+    }
+
+    public void deleteStock(Long productId) {
+        if(!repo.existsById(productId)) {
+            throw  new InventoryNotFoundException("Inventory not found");
+        }
+        repo.deleteById(productId);
     }
 }
