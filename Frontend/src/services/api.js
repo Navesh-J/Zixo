@@ -11,6 +11,12 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      try {
+        const decoded = JSON.parse(atob(token.split(".")[1]));
+        config.headers["X-User-Name"] = decoded.sub;
+      } catch (e) {
+        console.error("Invalid token");
+      }
     }
 
     return config;
