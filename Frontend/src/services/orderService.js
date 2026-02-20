@@ -27,3 +27,17 @@ export const payOrder = async (orderId) => {
   const { data } = await api.post(`${BASE_URL}/${orderId}/pay`);
   return data;
 };
+
+export const getSellerAnalytics = async () => {
+  const response = await api.get(
+    "/order-service/orders/seller/analytics"
+  );
+  return response.data;
+};
+
+export const getSellerOrders = async () => {
+  const response = await api.get(
+    "/order-service/orders/seller/orders"
+  );
+  return response.data;
+};
