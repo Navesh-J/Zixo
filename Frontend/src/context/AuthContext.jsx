@@ -28,9 +28,7 @@ const decodeToken = (token) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() =>
-    localStorage.getItem("zixo_token")
-  );
+  const [token, setToken] = useState(() => localStorage.getItem("zixo_token"));
 
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -43,7 +41,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback((jwtToken) => {
     localStorage.setItem("zixo_token", jwtToken);
+    const decoded = decodeToken(jwtToken);
     setToken(jwtToken);
+    if (decoded) {
+      setUser({
+        username: decoded.sub,
+        role: decoded.role,
+        exp: decoded.exp,
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -85,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     return () => clearTimeout(timeout);
   }, [token, logout]);
 
-  const isAuthenticated = !!token && !!user;
+  const isAuthenticated = !!token;
 
   const value = useMemo(
     () => ({
@@ -96,12 +102,8 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated,
       authLoading,
     }),
-    [token, user, login, logout, authLoading]
+    [token, user, login, logout, authLoading],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
