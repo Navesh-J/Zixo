@@ -8,5 +8,6 @@ public class ProductResponse {
     private String productName;
     private String productDescription;
     private Double price;
-    private Integer stock;
+    //    private Integer stock;
+    private String sellerUsername;
 }

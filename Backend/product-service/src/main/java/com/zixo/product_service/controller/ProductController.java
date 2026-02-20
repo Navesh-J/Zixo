@@ -1,7 +1,10 @@
 package com.zixo.product_service.controller;
 
+import com.zixo.product_service.dto.CreateProductRequest;
+import com.zixo.product_service.dto.UpdateProductRequest;
 import com.zixo.product_service.model.Product;
 import com.zixo.product_service.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +19,8 @@ public class ProductController {
     private final ProductService service;
 
     @PostMapping("/add")
-    public ResponseEntity<Product> create(@RequestHeader("X-User-Name") String username, @RequestBody Product product) {
-        product.setSellerUsername(username);
-        return ResponseEntity.ok(service.createProduct(product));
+    public ResponseEntity<Product> create(@RequestHeader("X-User-Name") String username, @Valid @RequestBody CreateProductRequest product) {
+        return ResponseEntity.ok(service.createProduct(username, product));
     }
 
     @GetMapping
@@ -28,6 +30,7 @@ public class ProductController {
 
     @GetMapping("/my")
     public ResponseEntity<List<Product>> getMyProducts(@RequestHeader("X-User-Name") String username) {
+        System.out.println("USERNAME: " + username);
         return ResponseEntity.ok(service.getBySeller(username));
     }
 
@@ -38,8 +41,8 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return service.updateProduct(id, product);
+    public ResponseEntity<Product> updateProduct(@RequestHeader("X-User-Name") String username, @PathVariable Long id, @RequestBody UpdateProductRequest product) {
+        return service.updateProduct(username, id, product);
     }
 
     @DeleteMapping("/{id}")
