@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
-import Navbar from "./components/Navbar";
+import LayoutSwitcher from "./components/Navbar/LayoutSwitcher";
+import SellerLayout from "./components/Navbar/SellerLayout";
 
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
@@ -10,96 +11,103 @@ import OrderSuccess from "./pages/OrderSuccess";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MyOrders from "./pages/MyOrders";
-// import AdminDashboard from "./pages/AdminDashboard";
-// import SellerDashboard from "./pages/SellerDashboard";
 
-import ProtectedRoute from "./routes/ProtectedRoute";
-import GuestRoute from "./routes/GuestRoute";
+import SellerDashboard from "./pages/seller/SellerDashboard";
+import SellerProducts from "./pages/seller/SellerProducts";
+import SellerOrders from "./pages/seller/SellerOrders";
+import CreateProduct from "./pages/seller/CreateProduct";
+import EditProduct from "./pages/seller/EditProduct";
+
 import AuthGate from "./routes/AuthGate";
 import RoleRoute from "./routes/RoleRoute";
+import GuestRoute from "./routes/GuestRoute";
 
 function App() {
   return (
     <>
-      <Navbar />
+      <LayoutSwitcher />
 
-      <div className="container mx-auto p-6">
-        <AuthGate>
-          <Routes>
-            {/* Public */}
-            <Route path="/" element={<Home />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/cart" element={<Cart />} />
+      <AuthGate>
+        <Routes>
+          {/* 🌍 PUBLIC */}
+          <Route path="/" element={<Home />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
 
-            {/* Guest only */}
-            <Route
-              path="/login"
-              element={
-                <GuestRoute>
-                  <Login />
-                </GuestRoute>
-              }
-            />
+          {/* 👻 GUEST */}
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            }
+          />
 
-            <Route
-              path="/register"
-              element={
-                <GuestRoute>
-                  <Register />
-                </GuestRoute>
-              }
-            />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
+            }
+          />
 
-            {/* Protected */}
-            <Route
-              path="/checkout"
-              element={
-                <ProtectedRoute>
-                  <Checkout />
-                </ProtectedRoute>
-              }
-            />
+          {/* 👤 USER */}
+          <Route
+            path="/cart"
+            element={
+              <RoleRoute allowedRoles={["USER"]}>
+                <Cart />
+              </RoleRoute>
+            }
+          />
 
-            <Route
-              path="/order-success"
-              element={
-                <ProtectedRoute>
-                  <OrderSuccess />
-                </ProtectedRoute>
-              }
-            />
+          <Route
+            path="/checkout"
+            element={
+              <RoleRoute allowedRoles={["USER"]}>
+                <Checkout />
+              </RoleRoute>
+            }
+          />
 
-            <Route
-              path="/my-orders"
-              element={
-                <ProtectedRoute>
-                  <MyOrders />
-                </ProtectedRoute>
-              }
-            />
+          <Route
+            path="/order-success"
+            element={
+              <RoleRoute allowedRoles={["USER"]}>
+                <OrderSuccess />
+              </RoleRoute>
+            }
+          />
 
-            <Route
-              path="/admin"
-              element={
-                <RoleRoute allowedRoles={["ADMIN"]}>
-                  {/* <AdminDashboard /> */}
-                </RoleRoute>
-              }
-            />
+          <Route
+            path="/my-orders"
+            element={
+              <RoleRoute allowedRoles={["USER"]}>
+                <MyOrders />
+              </RoleRoute>
+            }
+          />
+          {/* 🏪 SELLER (NESTED ROUTES) */}
+          <Route
+            path="/seller"
+            element={
+              <RoleRoute allowedRoles={["SELLER"]}>
+                <SellerLayout />
+              </RoleRoute>
+            }
+          >
+            <Route index element={<SellerDashboard />} />
+            <Route path="products" element={<SellerProducts />} />
+            <Route path="products/new" element={<CreateProduct />} />
+            <Route path="products/edit/:id" element={<EditProduct />} />
+            <Route path="orders" element={<SellerOrders />} />
+          </Route>
 
-            <Route
-              path="/seller"
-              element={
-                <RoleRoute allowedRoles={["SELLER"]}>
-                  {/* <SellerDashboard /> */}
-                </RoleRoute>
-              }
-            />
-
-            <Route path="*" element={<h1>Page Not Found</h1>} />
-          </Routes>
-        </AuthGate>
-      </div>
+          {/* 🛑 FALLBACK */}
+          <Route path="*" element={<h1>Page Not Found</h1>} />
+        </Routes>
+      </AuthGate>
     </>
   );
 }
