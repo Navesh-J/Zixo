@@ -1,38 +1,25 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  updateProduct,
-  getProductById,
-  updateStock, // ✅ NEW
-  getStock, // ✅ NEW
-} from "../../services/productService";
+import { updateProduct, getProductById, updateStock, getStock } from "../../services/productService";
 import ProductForm from "./ProductForm";
+import { toast } from "sonner";
+import { ArrowLeft, Loader2, Edit3 } from "lucide-react";
 
 function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadProduct();
-  }, [id]);
+  useEffect(() => { loadProduct(); }, [id]);
 
   const loadProduct = async () => {
     try {
       const data = await getProductById(id);
-
-      // ✅ NEW: fetch stock separately
       const stockData = await getStock(id);
-
-      setProduct({
-        ...data,
-        initialStock: stockData?.availableStock ?? 0, // ✅ IMPORTANT
-      });
+      setProduct({ ...data, initialStock: stockData?.availableStock ?? 0 });
     } catch (err) {
-      console.error(err);
-      alert("Failed to load product");
+      toast.error("RETRIEVAL_ERROR: Failed to load artifact data.");
       navigate("/seller/products");
     }
   };
@@ -40,38 +27,40 @@ function EditProduct() {
   const handleUpdate = async (data) => {
     try {
       setLoading(true);
-
-      // ✅ UPDATED: remove stock from product update
       await updateProduct(id, {
         productName: data.productName,
         productDescription: data.productDescription,
         price: data.price,
       });
-
-      // ✅ NEW: update stock separately
       await updateStock(id, data.initialStock);
-
-      alert("Product updated successfully");
+      toast.success("SYSTEM_UPDATE: Artifact parameters modified.");
       navigate("/seller/products");
     } catch (err) {
-      console.error(err);
-      alert("Failed to update product");
+      toast.error("OVERWRITE_ERROR: Data commit failed.");
     } finally { 
       setLoading(false);
     }
   };
 
-  if (!product) return <p>Loading...</p>;
+  if (!product) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
+      <Loader2 className="animate-spin text-goth-blood" />
+      <span className="font-cyber text-[10px] tracking-[0.4em] text-zinc-500 uppercase">Accessing_Entry...</span>
+    </div>
+  );
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Edit Product</h1>
+    <div className="max-w-4xl">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-zinc-500 hover:text-white mb-8 font-cyber text-[10px] tracking-widest transition-colors uppercase">
+        <ArrowLeft size={14} /> Cancel_Editing
+      </button>
 
-      <ProductForm
-        initialData={product} // ✅ now includes initialStock
-        onSubmit={handleUpdate}
-        loading={loading}
-      />
+      <header className="flex items-center gap-4 mb-10">
+        <Edit3 className="text-goth-blood" />
+        <h1 className="text-4xl font-heading tracking-widest uppercase text-white">Edit_Product // {id}</h1>
+      </header>
+
+      <ProductForm initialData={product} onSubmit={handleUpdate} loading={loading} />
     </div>
   );
 }

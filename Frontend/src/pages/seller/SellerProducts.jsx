@@ -1,16 +1,33 @@
 import { useEffect, useRef, useState } from "react";
-import { getMyProducts, deleteProduct,getStock } from "../../services/productService";
+import {
+  getMyProducts,
+  deleteProduct,
+  getStock,
+} from "../../services/productService";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { toast } from "sonner";
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  Box,
+  Loader2,
+  AlertTriangle,
+  X,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function SellerProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
 
+  // New State for Custom Modal
+  const [productToDelete, setProductToDelete] = useState(null);
+
   const navigate = useNavigate();
   const { user } = useAuth();
-
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -24,120 +41,203 @@ function SellerProducts() {
     try {
       const data = await getMyProducts(user.username);
       const productsArray = Array.isArray(data) ? data : [];
-
       const productsWithStock = [];
 
-      // ✅ Sequential fetching (no abort issues)
       for (const product of productsArray) {
         try {
           const stockData = await getStock(product.productId);
-
           productsWithStock.push({
             ...product,
             stock: stockData?.availableStock ?? 0,
           });
         } catch (err) {
-          console.error("Stock fetch failed", err);
-
-          productsWithStock.push({
-            ...product,
-            stock: 0,
-          });
+          productsWithStock.push({ ...product, stock: 0 });
         }
       }
-
       setProducts(productsWithStock);
     } catch (err) {
-      console.error("Failed to load products", err);
-      setProducts([]);
+      toast.error("DATA_FAULT: Failed to sync inventory.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
-
+  const confirmDelete = async () => {
+    const id = productToDelete.productId;
     setDeletingId(id);
+    setProductToDelete(null); // Close modal immediately
     try {
       await deleteProduct(id);
-
-      // Optimistic update
+      toast.success("PURGE_COMPLETE: Artifact removed.");
       setProducts((prev) => prev.filter((p) => p.productId !== id));
     } catch (err) {
-      alert("Failed to delete product");
+      toast.error("DELETE_FAILED: Interference detected.");
     } finally {
       setDeletingId(null);
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <p className="animate-pulse text-gray-800">Loading products...</p>
+      <div className="h-[60vh] flex flex-col items-center justify-center space-y-4 font-cyber">
+        <Loader2 className="animate-spin text-goth-blood" />
+        <p className="text-[10px] tracking-[0.5em] text-zinc-500 uppercase">
+          Indexing_Inventory...
+        </p>
+      </div>
     );
-  }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">My Products</h1>
+    <div className="space-y-8 relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <h1 className="text-4xl font-heading tracking-widest uppercase text-white">
+          Inventory_Matrix
+        </h1>
+        <button
+          onClick={() => navigate("/seller/products/new")}
+          className="bg-white text-black font-heading text-xs tracking-widest px-6 py-3 hover:bg-goth-blood hover:text-white transition-all flex items-center gap-2"
+        >
+          <Plus size={16} /> ADD_NEW_ARTIFACT
+        </button>
+      </div>
 
-      <button
-        onClick={() => navigate("/seller/products/new")}
-        className="mb-6 bg-black text-white px-4 py-2 rounded"
-      >
-        Add Product
-      </button>
+      <div className="grid gap-4">
+        {products.length === 0 ? (
+          <p className="py-20 text-center font-cyber text-zinc-600 uppercase tracking-widest border border-dashed border-goth-steel">
+            // NO_ASSETS_DETECTED_IN_SECTOR
+          </p>
+        ) : (
+          products.map((product) => (
+            <ProductRow
+              key={product.productId}
+              product={product}
+              onDelete={() => setProductToDelete(product)} // Triggers Custom Modal
+              onEdit={() =>
+                navigate(`/seller/products/edit/${product.productId}`)
+              }
+              deletingId={deletingId}
+            />
+          ))
+        )}
+      </div>
 
-      {products.length === 0 ? (
-        <p className="text-gray-800">No products yet.</p>
-      ) : (
-        products.map((product) => (
-          <ProductCard
-            key={product.productId}
-            product={product}
-            onDelete={handleDelete}
-            onEdit={() =>
-              navigate(`/seller/products/edit/${product.productId}`)
-            }
-            deletingId={deletingId}
+      {/* 💀 CYBER-GOTH DELETE MODAL */}
+      <AnimatePresence>
+        {productToDelete && (
+          <DeleteConfirmationModal
+            product={productToDelete}
+            onClose={() => setProductToDelete(null)}
+            onConfirm={confirmDelete}
           />
-        ))
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// 🔹 Product Card Component
-function ProductCard({ product, onDelete, onEdit, deletingId }) {
+function ProductRow({ product, onDelete, onEdit, deletingId }) {
   return (
-    <div className="bg-white p-5 mb-4 rounded shadow flex justify-between">
-      <div>
-        <h2 className="font-semibold">{product.productName}</h2>
-        <p>₹ {product.price}</p>
-
-        {/* ✅ Stock Display */}
-        <p
-          className={`text-sm ${
-            product.stock === 0 ? "text-red-500" : "text-gray-500"
-          }`}
-        >
-          Stock: {product.stock}
-        </p>
+    <div className="bg-goth-void border border-goth-steel p-6 flex flex-col md:flex-row justify-between items-center group hover:border-goth-blood/50 transition-colors">
+      <div className="flex items-center gap-6 flex-1 w-full">
+        <div className="hidden sm:flex h-12 w-12 bg-goth-black border border-goth-steel items-center justify-center text-zinc-700 group-hover:text-goth-blood transition-colors">
+          <Box size={20} />
+        </div>
+        <div>
+          <h2 className="font-heading text-lg text-white tracking-widest uppercase group-hover:text-goth-blood transition-colors">
+            {product.productName}
+          </h2>
+          <div className="flex gap-4 mt-1 font-cyber text-[10px] uppercase tracking-tighter">
+            <span className="text-zinc-500">
+              Val: <span className="text-white">₹{product.price}</span>
+            </span>
+            <span
+              className={`${product.stock === 0 ? "text-goth-blood" : "text-zinc-500"}`}
+            >
+              Stock:{" "}
+              <span
+                className={product.stock === 0 ? "animate-pulse" : "text-white"}
+              >
+                {product.stock}
+              </span>
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex gap-3">
-        <button onClick={onEdit} className="text-blue-600">
-          Edit
-        </button>
-
+      <div className="flex gap-4 mt-6 md:mt-0 w-full md:w-auto">
         <button
-          onClick={() => onDelete(product.productId)}
-          className="text-red-600"
-          disabled={deletingId === product.productId}
+          onClick={onEdit}
+          className="flex-1 md:flex-none flex items-center justify-center gap-2 font-cyber text-[10px] uppercase tracking-[0.2em] border border-goth-steel px-4 py-2 hover:bg-white hover:text-black transition-all"
         >
-          {deletingId === product.productId ? "Deleting..." : "Delete"}
+          <Edit3 size={14} /> EDIT
+        </button>
+        <button
+          onClick={onDelete}
+          disabled={deletingId === product.productId}
+          className="flex-1 md:flex-none flex items-center justify-center gap-2 font-cyber text-[10px] uppercase tracking-[0.2em] border border-goth-blood/30 text-goth-blood px-4 py-2 hover:bg-goth-blood hover:text-white transition-all disabled:opacity-50"
+        >
+          <Trash2 size={14} />{" "}
+          {deletingId === product.productId ? "PURGING..." : "DELETE"}
         </button>
       </div>
+    </div>
+  );
+}
+
+// 🔹 THEMED MODAL COMPONENT
+function DeleteConfirmationModal({ product, onClose, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/90 backdrop-blur-md"
+      />
+
+      {/* Modal Box */}
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="relative bg-goth-void border border-goth-blood p-8 max-w-md w-full shadow-[0_0_50px_rgba(225,29,72,0.2)]"
+      >
+        <div className="flex items-center gap-4 mb-6 text-goth-blood border-b border-goth-steel pb-4">
+          <AlertTriangle size={32} />
+          <h2 className="font-heading text-xl tracking-widest uppercase text-white">
+            Warning_Override
+          </h2>
+        </div>
+
+        <p className="font-cyber text-xs text-zinc-400 leading-relaxed uppercase tracking-wider mb-8">
+          You are about to purge{" "}
+          <span className="text-white font-bold">"{product.productName}"</span>{" "}
+          from the central ledger. This action is permanent and cannot be
+          reversed.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 font-heading text-[10px] tracking-widest py-3 border border-goth-steel text-zinc-500 hover:text-white transition-all"
+          >
+            ABORT_COMMAND
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 font-heading text-[10px] tracking-widest py-3 bg-goth-blood text-white hover:bg-red-700 transition-all shadow-[0_0_15px_rgba(225,29,72,0.3)]"
+          >
+            CONFIRM_PURGE
+          </button>
+        </div>
+
+        {/* Decorative Corner */}
+        <div className="absolute top-0 right-0 p-2 opacity-20">
+          <X size={40} className="text-goth-blood" />
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,4 +1,12 @@
 import { useState } from "react";
+import { toast } from "sonner";
+import {
+  PackagePlus,
+  FileText,
+  IndianRupee,
+  Database,
+  Save,
+} from "lucide-react";
 
 function ProductForm({ initialData = {}, onSubmit, loading }) {
   const [formData, setFormData] = useState({
@@ -9,27 +17,22 @@ function ProductForm({ initialData = {}, onSubmit, loading }) {
   });
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!formData.productName.trim()) {
-      alert("Product name is required");
+      toast.error("VALIDATION_ERROR: Artifact designation is required.");
       return;
     }
-
     if (Number(formData.price) <= 0) {
-      alert("Price must be greater than 0");
+      toast.error("VALIDATION_ERROR: Value must be positive.");
       return;
     }
-
     if (Number(formData.initialStock) < 0) {
-      alert("Stock cannot be negative");
+      toast.error("VALIDATION_ERROR: Inventory count cannot be negative.");
       return;
     }
 
@@ -40,59 +43,84 @@ function ProductForm({ initialData = {}, onSubmit, loading }) {
     });
   };
 
+  const inputClasses =
+    "w-full bg-goth-black border border-goth-steel p-3 font-cyber text-sm focus:border-goth-blood focus:outline-none text-white placeholder:text-zinc-700 transition-all";
+  const labelClasses =
+    "flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2 font-bold";
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white p-6 rounded shadow max-w-lg"
+      className="bg-goth-void border border-goth-steel p-8 max-w-xl relative overflow-hidden group"
     >
-      <div className="mb-4">
-        <label>Product Name</label>
-        <input
-          name="productName"
-          value={formData.productName}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-      </div>
+      {/* Decorative scanline for the form */}
+      <div className="absolute inset-0 pointer-events-none bg-linear-to-b from-goth-blood/5 to-transparent h-px group-hover:animate-[scanline_3s_linear_infinite]" />
 
-      <div className="mb-4">
-        <label>Description</label>
-        <textarea
-          name="productDescription"
-          value={formData.productDescription}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-      </div>
+      <div className="space-y-6">
+        <div>
+          <label className={labelClasses}>
+            <PackagePlus size={12} /> Artifact_Name
+          </label>
+          <input
+            name="productName"
+            placeholder="DESIGNATION_01"
+            value={formData.productName}
+            onChange={handleChange}
+            className={inputClasses}
+          />
+        </div>
 
-      <div className="mb-4">
-        <label>Price</label>
-        <input
-          type="number"
-          name="price"
-          value={formData.price}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-      </div>
+        <div>
+          <label className={labelClasses}>
+            <FileText size={12} /> Description_Log
+          </label>
+          <textarea
+            name="productDescription"
+            placeholder="// Enter technical specifications..."
+            rows={3}
+            value={formData.productDescription}
+            onChange={handleChange}
+            className={`${inputClasses} resize-none`}
+          />
+        </div>
 
-      <div className="mb-4">
-        <label>Stock</label>
-        <input
-          type="number"
-          name="initialStock"
-          value={formData.initialStock}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        />
-      </div>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className={labelClasses}>
+              <IndianRupee size={12} /> Market_Value
+            </label>
+            <input
+              type="number"
+              name="price"
+              placeholder="0.00"
+              value={formData.price}
+              onChange={handleChange}
+              className={inputClasses}
+            />
+          </div>
+          <div>
+            <label className={labelClasses}>
+              <Database size={12} /> Stock_Reserve
+            </label>
+            <input
+              type="number"
+              name="initialStock"
+              placeholder="0"
+              value={formData.initialStock}
+              onChange={handleChange}
+              className={inputClasses}
+            />
+          </div>
+        </div>
 
-      <button
-        disabled={loading}
-        className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {loading ? "Saving..." : "Save Product"}
-      </button>
+        <button
+          disabled={loading}
+          className="w-full mt-4 bg-white text-black font-heading tracking-[0.3em] py-4 hover:bg-goth-blood hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+        >
+          <Save size={18} />
+          <span>{loading ? "COMMITTING_DATA..." : "SAVE_ARTIFACT"}</span>
+        </button>
+      </div>
     </form>
   );
 }

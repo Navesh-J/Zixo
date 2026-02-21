@@ -6,6 +6,7 @@ import {
   useMemo,
   useCallback,
 } from "react";
+import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
@@ -43,6 +44,7 @@ export const CartProvider = ({ children }) => {
       );
 
       if (existing) {
+        toast.info(`QUANTITY_INCREASED: ${product.productName}`);
         return prev.map((item) =>
           item.productId === product.productId
             ? { ...item, quantity: item.quantity + 1 }
@@ -50,12 +52,17 @@ export const CartProvider = ({ children }) => {
         );
       }
 
+      toast.success(`ARTIFACT_ACQUIRED: ${product.productName}`);
       return [...prev, { ...product, quantity: 1 }];
     });
   }, []);
 
   const removeFromCart = useCallback((productId) => {
-    setCartItems((prev) => prev.filter((item) => item.productId !== productId));
+    setCartItems((prev) => {
+      const item = prev.find(i => i.productId === productId);
+      if (item) toast.error(`REMOVED: ${item.productName} purged from logs.`);
+      return prev.filter((item) => item.productId !== productId);
+    });
   }, []);
 
   const updateQuantity = useCallback((productId, quantity) => {
@@ -75,6 +82,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    toast.info("CACHE_CLEARED: Inventory logs wiped.");
   }, []);
 
   // 🔹 Derived values

@@ -1,14 +1,16 @@
 import { useAuth } from "../../context/AuthContext";
 import { useLocation } from "react-router-dom";
 import UserNavbar from "./UserNavbar";
-// import SellerNavbar from "./SellerNavbar";
 
 function LayoutSwitcher() {
   const { user, isAuthenticated } = useAuth();
   const location = useLocation();
-  const isSellerRoute = location.pathname.startsWith("/seller");
+  
+  // Logic: Hide the global UserNavbar if the seller is currently in the dashboard area
+  const isSellerArea = location.pathname.startsWith("/seller");
+  const shouldHideNavbar = isAuthenticated && user?.role === "SELLER" && isSellerArea;
 
-  if (isAuthenticated && user?.role === "SELLER" && isSellerRoute) {
+  if (shouldHideNavbar) {
     return null;
   }
 

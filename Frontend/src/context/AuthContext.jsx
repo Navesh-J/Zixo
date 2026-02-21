@@ -6,6 +6,7 @@ import {
   useEffect,
   useCallback,
 } from "react";
+import { toast } from "sonner";
 
 const AuthContext = createContext();
 
@@ -29,7 +30,6 @@ const decodeToken = (token) => {
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("zixo_token"));
-
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -49,8 +49,34 @@ export const AuthProvider = ({ children }) => {
         role: decoded.role,
         exp: decoded.exp,
       });
+      toast.success("IDENTITY_VERIFIED: Session established.");
     }
   }, []);
+
+  // 🛡️ CROSS-TAB SYNC: Updates state if another tab changes the token
+  useEffect(() => {
+    const handleSync = (e) => {
+      if (e.key === "zixo_token") {
+        const newToken = e.newValue;
+        if (!newToken) {
+          logout();
+        } else {
+          setToken(newToken);
+          const decoded = decodeToken(newToken);
+          if (decoded) {
+            setUser({
+              username: decoded.sub,
+              role: decoded.role,
+              exp: decoded.exp,
+            });
+          }
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleSync);
+    return () => window.removeEventListener("storage", handleSync);
+  }, [logout]);
 
   useEffect(() => {
     if (!token) {
@@ -60,7 +86,6 @@ export const AuthProvider = ({ children }) => {
     }
 
     const decoded = decodeToken(token);
-
     if (!decoded) {
       logout();
       setAuthLoading(false);

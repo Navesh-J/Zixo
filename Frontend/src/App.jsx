@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
 import LayoutSwitcher from "./components/Navbar/LayoutSwitcher";
 import SellerLayout from "./components/Navbar/SellerLayout";
@@ -22,93 +23,199 @@ import AuthGate from "./routes/AuthGate";
 import RoleRoute from "./routes/RoleRoute";
 import GuestRoute from "./routes/GuestRoute";
 
+import { useAuth } from "./context/AuthContext";
+
+const PageWrapper = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    className="relative z-10 pt-2 pb-2 px-4 md:px-6 w-full max-w-400 mx-auto min-h-screen"
+  >
+    {children}
+  </motion.div>
+);
+
 function App() {
+  const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+
   return (
-    <>
-      <LayoutSwitcher />
+    <div className="relative min-h-screen bg-goth-black selection:bg-goth-blood selection:text-white">
+      {/* 🔮 CYBER EFFECTS */}
+      <div className="scanline" />
+      <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_50%_50%,rgba(20,20,20,1)_0%,rgba(5,5,5,1)_100%)]" />
+
+      {/* Navbar sits on top */}
+      <div className="relative z-50">
+        <LayoutSwitcher />
+      </div>
 
       <AuthGate>
-        <Routes>
-          {/* 🌍 PUBLIC */}
-          <Route path="/" element={<Home />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            {/* 🌍 PUBLIC */}
+            <Route
+              path="/"
+              element={
+                isAuthenticated && user?.role === "SELLER" ? (
+                  <Navigate to="/seller" replace />
+                ) : (
+                  <PageWrapper>
+                    <Home />
+                  </PageWrapper>
+                )
+              }
+            />
+            <Route
+              path="/product/:id"
+              element={
+                isAuthenticated && user?.role === "SELLER" ? (
+                  <Navigate to="/seller" replace />
+                ) : (
+                  <PageWrapper>
+                    <ProductDetails />
+                  </PageWrapper>
+                )
+              }
+            />
 
-          {/* 👻 GUEST */}
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <Login />
-              </GuestRoute>
-            }
-          />
+            {/* 👻 GUEST */}
+            <Route
+              path="/login"
+              element={
+                <GuestRoute>
+                  <PageWrapper>
+                    <Login />
+                  </PageWrapper>
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <GuestRoute>
+                  <PageWrapper>
+                    <Register />
+                  </PageWrapper>
+                </GuestRoute>
+              }
+            />
 
-          <Route
-            path="/register"
-            element={
-              <GuestRoute>
-                <Register />
-              </GuestRoute>
-            }
-          />
+            {/* 👤 USER */}
+            <Route
+              path="/cart"
+              element={
+                <RoleRoute allowedRoles={["USER"]}>
+                  <PageWrapper>
+                    <Cart />
+                  </PageWrapper>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <RoleRoute allowedRoles={["USER"]}>
+                  <PageWrapper>
+                    <Checkout />
+                  </PageWrapper>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/order-success"
+              element={
+                <RoleRoute allowedRoles={["USER"]}>
+                  <PageWrapper>
+                    <OrderSuccess />
+                  </PageWrapper>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/my-orders"
+              element={
+                <RoleRoute allowedRoles={["USER"]}>
+                  <PageWrapper>
+                    <MyOrders />
+                  </PageWrapper>
+                </RoleRoute>
+              }
+            />
 
-          {/* 👤 USER */}
-          <Route
-            path="/cart"
-            element={
-              <RoleRoute allowedRoles={["USER"]}>
-                <Cart />
-              </RoleRoute>
-            }
-          />
+            {/* 🏪 SELLER */}
+            <Route
+              path="/seller"
+              element={
+                <RoleRoute allowedRoles={["SELLER"]}>
+                  <SellerLayout />
+                </RoleRoute>
+              }
+            >
+              <Route
+                index
+                element={
+                  <PageWrapper>
+                    <SellerDashboard />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="products"
+                element={
+                  <PageWrapper>
+                    <SellerProducts />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="products/new"
+                element={
+                  <PageWrapper>
+                    <CreateProduct />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="products/edit/:id"
+                element={
+                  <PageWrapper>
+                    <EditProduct />
+                  </PageWrapper>
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <PageWrapper>
+                    <SellerOrders />
+                  </PageWrapper>
+                }
+              />
+            </Route>
 
-          <Route
-            path="/checkout"
-            element={
-              <RoleRoute allowedRoles={["USER"]}>
-                <Checkout />
-              </RoleRoute>
-            }
-          />
-
-          <Route
-            path="/order-success"
-            element={
-              <RoleRoute allowedRoles={["USER"]}>
-                <OrderSuccess />
-              </RoleRoute>
-            }
-          />
-
-          <Route
-            path="/my-orders"
-            element={
-              <RoleRoute allowedRoles={["USER"]}>
-                <MyOrders />
-              </RoleRoute>
-            }
-          />
-          {/* 🏪 SELLER (NESTED ROUTES) */}
-          <Route
-            path="/seller"
-            element={
-              <RoleRoute allowedRoles={["SELLER"]}>
-                <SellerLayout />
-              </RoleRoute>
-            }
-          >
-            <Route index element={<SellerDashboard />} />
-            <Route path="products" element={<SellerProducts />} />
-            <Route path="products/new" element={<CreateProduct />} />
-            <Route path="products/edit/:id" element={<EditProduct />} />
-            <Route path="orders" element={<SellerOrders />} />
-          </Route>
-
-          {/* 🛑 FALLBACK */}
-          <Route path="*" element={<h1>Page Not Found</h1>} />
-        </Routes>
+            {/* 🛑 FALLBACK */}
+            <Route
+              path="*"
+              element={
+                <PageWrapper>
+                  <div className="h-[60vh] flex flex-col items-center justify-center text-center">
+                    <h1 className="font-heading text-6xl text-goth-blood mb-4 tracking-[0.2em]">
+                      VOID
+                    </h1>
+                    <p className="text-zinc-500 uppercase tracking-widest text-sm">
+                      The path you seek does not exist in this realm.
+                    </p>
+                  </div>
+                </PageWrapper>
+              }
+            />
+          </Routes>
+        </AnimatePresence>
       </AuthGate>
-    </>
+    </div>
   );
 }
 
