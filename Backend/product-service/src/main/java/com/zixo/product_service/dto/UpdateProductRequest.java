@@ -9,4 +9,5 @@ public class UpdateProductRequest {
     private String productDescription;
     private Double price;
     private Integer additionalStock;
+    private String imageUrl;
 }

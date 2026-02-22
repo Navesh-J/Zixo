@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProduct } from "../../services/productService";
+import {
+  createProductWithImageUrl,
+  createProductWithUpload,
+} from "../../services/productService";
 import ProductForm from "./ProductForm";
 import { toast } from "sonner";
 import { ArrowLeft, Terminal } from "lucide-react";
@@ -9,10 +12,14 @@ function CreateProduct() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreate = async (data) => {
+  const handleCreate = async ({ values, file }) => {
     try {
       setLoading(true);
-      await createProduct(data);
+      if (file) {
+      await createProductWithUpload(values, file);
+    } else {
+      await createProductWithImageUrl(values);
+    }
       toast.success("SYSTEM_UPDATE: New artifact registered successfully.");
       navigate("/seller/products");
     } catch {

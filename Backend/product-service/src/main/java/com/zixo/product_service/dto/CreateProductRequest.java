@@ -9,6 +9,7 @@ public class CreateProductRequest {
 
     @NotNull
     private String productName;
+
     private String productDescription;
 
     @NotNull
@@ -17,4 +18,6 @@ public class CreateProductRequest {
     @NotNull
     @Min(1)
     private Integer initialStock;
+
+    private String imageUrl;
 }

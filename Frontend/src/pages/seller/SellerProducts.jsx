@@ -4,6 +4,7 @@ import {
   deleteProduct,
   getStock,
 } from "../../services/productService";
+import { BASE_URL } from "../../services/constants";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
@@ -11,10 +12,10 @@ import {
   Plus,
   Edit3,
   Trash2,
-  Box,
   Loader2,
   AlertTriangle,
   X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,8 +23,6 @@ function SellerProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
-
-  // New State for Custom Modal
   const [productToDelete, setProductToDelete] = useState(null);
 
   const navigate = useNavigate();
@@ -65,7 +64,7 @@ function SellerProducts() {
   const confirmDelete = async () => {
     const id = productToDelete.productId;
     setDeletingId(id);
-    setProductToDelete(null); // Close modal immediately
+    setProductToDelete(null);
     try {
       await deleteProduct(id);
       toast.success("PURGE_COMPLETE: Artifact removed.");
@@ -111,7 +110,7 @@ function SellerProducts() {
             <ProductRow
               key={product.productId}
               product={product}
-              onDelete={() => setProductToDelete(product)} // Triggers Custom Modal
+              onDelete={() => setProductToDelete(product)}
               onEdit={() =>
                 navigate(`/seller/products/edit/${product.productId}`)
               }
@@ -121,7 +120,6 @@ function SellerProducts() {
         )}
       </div>
 
-      {/* 💀 CYBER-GOTH DELETE MODAL */}
       <AnimatePresence>
         {productToDelete && (
           <DeleteConfirmationModal
@@ -136,19 +134,37 @@ function SellerProducts() {
 }
 
 function ProductRow({ product, onDelete, onEdit, deletingId }) {
+  // Image URL Resolver
+  const getImageUrl = () => {
+    if (!product.imageUrl) return "/placeholder.png";
+    return product.imageUrl.startsWith("http")
+      ? product.imageUrl
+      : `${BASE_URL}${product.imageUrl}`;
+  };
+
   return (
-    <div className="bg-goth-void border border-goth-steel p-6 flex flex-col md:flex-row justify-between items-center group hover:border-goth-blood/50 transition-colors">
+    <div className="bg-goth-void border border-goth-steel p-4 flex flex-col md:flex-row justify-between items-center group hover:border-goth-blood transition-all duration-300">
       <div className="flex items-center gap-6 flex-1 w-full">
-        <div className="hidden sm:flex h-12 w-12 bg-goth-black border border-goth-steel items-center justify-center text-zinc-700 group-hover:text-goth-blood transition-colors">
-          <Box size={20} />
+        {/* 🖼️ THEMED IMAGE THUMBNAIL */}
+        <div className="hidden sm:flex h-16 w-16 bg-goth-black border border-goth-steel items-center justify-center overflow-hidden shrink-0 group-hover:border-goth-blood/50 transition-colors">
+          <img
+            src={getImageUrl()}
+            alt={product.productName}
+            className="h-full w-full object-cover opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/150?text=VOID";
+            }}
+          />
         </div>
+
         <div>
           <h2 className="font-heading text-lg text-white tracking-widest uppercase group-hover:text-goth-blood transition-colors">
             {product.productName}
           </h2>
           <div className="flex gap-4 mt-1 font-cyber text-[10px] uppercase tracking-tighter">
             <span className="text-zinc-500">
-              Val: <span className="text-white">₹{product.price}</span>
+              Val:{" "}
+              <span className="text-white font-bold">₹{product.price}</span>
             </span>
             <span
               className={`${product.stock === 0 ? "text-goth-blood" : "text-zinc-500"}`}
@@ -184,11 +200,9 @@ function ProductRow({ product, onDelete, onEdit, deletingId }) {
   );
 }
 
-// 🔹 THEMED MODAL COMPONENT
 function DeleteConfirmationModal({ product, onClose, onConfirm }) {
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -197,7 +211,6 @@ function DeleteConfirmationModal({ product, onClose, onConfirm }) {
         className="absolute inset-0 bg-black/90 backdrop-blur-md"
       />
 
-      {/* Modal Box */}
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -214,8 +227,7 @@ function DeleteConfirmationModal({ product, onClose, onConfirm }) {
         <p className="font-cyber text-xs text-zinc-400 leading-relaxed uppercase tracking-wider mb-8">
           You are about to purge{" "}
           <span className="text-white font-bold">"{product.productName}"</span>{" "}
-          from the central ledger. This action is permanent and cannot be
-          reversed.
+          from the central ledger.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4">
@@ -233,7 +245,6 @@ function DeleteConfirmationModal({ product, onClose, onConfirm }) {
           </button>
         </div>
 
-        {/* Decorative Corner */}
         <div className="absolute top-0 right-0 p-2 opacity-20">
           <X size={40} className="text-goth-blood" />
         </div>
