@@ -1,70 +1,63 @@
 import { useEffect, useState } from "react";
 
-const services = [
-  { name: "API Service", url: "https://api-gateway-gelc.onrender.com/ping" },
-  { name: "Auth Service", url: "https://auth-service-6c0q.onrender.com/ping" },
-  { name: "Product Service", url: "https://product-service-y01r.onrender.com/ping" },
-  { name: "Order Service", url: "https://order-service-iyqj.onrender.com/ping" },
-  { name: "Inventory Service", url: "https://inventory-service-9zoo.onrender.com/ping" },
+const gatewayUrl = "https://api-gateway-gelc.onrender.com/ping";
+
+const directWakeUrls = [
+  "https://discovery-server-2rg6.onrender.com/", // Eureka
+  "https://auth-service-6c0q.onrender.com/ping",
+  "https://product-service-y01r.onrender.com/ping",
+  "https://order-service-iyqj.onrender.com/ping",
+  "https://inventory-service-9zoo.onrender.com/ping",
 ];
 
 export default function WakeLoader({ onReady }) {
   const [progress, setProgress] = useState(0);
   const [current, setCurrent] = useState("Initializing services...");
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const wakeService = async (service) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 180000); // 180s max
-
-    try {
-      const res = await fetch(service.url, {
-        method: "GET",
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        throw new Error(`${service.name} failed`);
-      }
-
-      return { success: true };
-    } catch (err) {
-      return { success: false, service: service.name };
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const wakeAll = async () => {
     setError(null);
-    setLoading(true);
-    setProgress(0);
+    setProgress(5);
 
-    let completed = 0;
+    // 🔥 Fire-and-forget wake calls (ignore CORS completely)
+    directWakeUrls.forEach((url) => {
+      fetch(url, { mode: "no-cors" }).catch(() => {});
+    });
 
-    const results = await Promise.all(
-      services.map(async (service) => {
-        setCurrent(`Waking ${service.name}...`);
-        const result = await wakeService(service);
-        completed++;
-        setProgress(Math.round((completed / services.length) * 100));
-        return result;
-      })
-    );
+    setCurrent("Waking API Gateway...");
+    setProgress(20);
 
-    const failed = results.filter((r) => !r.success);
+    // 🎯 Wait for Gateway to actually be ready
+    let ready = false;
+    let attempts = 0;
+    const maxAttempts = 60; // ~200 seconds max (5s * 60)
 
-    if (failed.length > 0) {
-      setError(
-        `Failed: ${failed.map((f) => f.service).join(", ")}`
-      );
-      setLoading(false);
+    while (!ready && attempts < maxAttempts) {
+      try {
+        const res = await fetch(gatewayUrl);
+        if (res.ok) {
+          ready = true;
+          break;
+        }
+      } catch (err) {
+        // ignore errors while waking
+      }
+
+      attempts++;
+      setProgress(Math.min(20 + attempts * 2, 90));
+      await sleep(5000);
+    }
+
+    if (!ready) {
+      setError("Gateway failed to start. Please retry.");
       return;
     }
 
+    setProgress(100);
     setCurrent("All services awake.");
-    setTimeout(onReady, 600);
+    setTimeout(onReady, 800);
   };
 
   useEffect(() => {
@@ -81,9 +74,9 @@ export default function WakeLoader({ onReady }) {
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p>Servers are asleep so it can take around 3-4 minutes</p>
 
-      <p className="text-sm text-gray-400">{current}</p>
+      <p>Servers are asleep so it can take around 2-4 minutes</p>
+      <p className="text-sm text-gray-400 mt-2">{current}</p>
 
       {error && (
         <div className="mt-6 text-red-500 text-sm text-center">
@@ -95,10 +88,6 @@ export default function WakeLoader({ onReady }) {
             Retry
           </button>
         </div>
-      )}
-
-      {!error && !loading && (
-        <p className="mt-4 text-green-500 text-sm">Ready</p>
       )}
     </div>
   );
