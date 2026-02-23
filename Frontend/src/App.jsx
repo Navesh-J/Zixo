@@ -48,14 +48,20 @@ function App() {
   useEffect(() => {
     const wakeUpBackend = async () => {
       try {
-        await fetch(`${API_BASE_URL}/ping`);
+        const response = await fetch(`${API_BASE_URL}/ping`);
+
+        if (!response.ok) {
+          throw new Error("Ping failed");
+        }
+
+        console.log("Gateway awake");
       } catch (error) {
         console.log("Backend wake-up failed");
       }
     };
 
     wakeUpBackend();
-  }, [API_BASE_URL]);
+  }, []);
 
   return (
     <div className="relative min-h-screen bg-goth-black selection:bg-goth-blood selection:text-white">
