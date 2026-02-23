@@ -11,7 +11,12 @@ public class RouteValidator {
 
     private static final List<String> OPEN_URLS = List.of(
 
-            "/auth-service/auth/login", "/auth-service/auth/register", "/product-service/products");
+            "/auth-service/auth/login",
+            "/auth-service/auth/register",
+            "/product-service/products",
+            "/ping",
+            "/actuator",
+            "/actuator/");
 
     public Predicate<ServerHttpRequest> isSecured = request -> OPEN_URLS.stream()
             .noneMatch(url -> request.getURI()
