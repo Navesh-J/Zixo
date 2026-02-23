@@ -16,7 +16,7 @@ export default function WakeLoader({ onReady }) {
 
   const wakeService = async (service) => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000); // 60s max
+    const timeout = setTimeout(() => controller.abort(), 180000); // 180s max
 
     try {
       const res = await fetch(service.url, {
