@@ -1,5 +1,6 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useEffect } from "react";
 
 import LayoutSwitcher from "./components/Navbar/LayoutSwitcher";
 import SellerLayout from "./components/Navbar/SellerLayout";
@@ -40,6 +41,21 @@ const PageWrapper = ({ children }) => (
 function App() {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
+
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+  useEffect(() => {
+    const wakeUpBackend = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/ping`);
+      } catch (error) {
+        console.log("Backend wake-up failed");
+      }
+    };
+
+    wakeUpBackend();
+  }, [API_BASE_URL]);
 
   return (
     <div className="relative min-h-screen bg-goth-black selection:bg-goth-blood selection:text-white">
