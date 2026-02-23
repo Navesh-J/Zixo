@@ -13,7 +13,7 @@ function ProductCard({ product }) {
   // Logic to determine if the image is a full URL or a relative path from the backend
   const getProductImage = () => {
     if (!product.imageUrl)
-      return "https://via.placeholder.com/400?text=VOID_ARTIFACT";
+      return "https://static.vecteezy.com/system/resources/thumbnails/001/618/355/original/computer-error-text-message-bad-glitch-effect-video.jpg";
 
     // If the imageUrl starts with http, it's an external link.
     // Otherwise, prepend the BASE_URL for uploaded files.
