@@ -1,9 +1,10 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
+import { useState } from "react";
 
 import LayoutSwitcher from "./components/Navbar/LayoutSwitcher";
 import SellerLayout from "./components/Navbar/SellerLayout";
+import WakeLoader from "./components/WakeLoader";
 
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
@@ -41,27 +42,32 @@ const PageWrapper = ({ children }) => (
 function App() {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const [ready, setReady] = useState(false);
 
-  const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+  if (!ready) {
+    return <WakeLoader onReady={() => setReady(true)} />;
+  }
 
-  useEffect(() => {
-    const wakeUpBackend = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/ping`);
+  // const API_BASE_URL =
+  //   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
-        if (!response.ok) {
-          throw new Error("Ping failed");
-        }
+  // useEffect(() => {
+  //   const wakeUpBackend = async () => {
+  //     try {
+  //       const response = await fetch(`${API_BASE_URL}/ping`);
 
-        console.log("Gateway awake");
-      } catch (error) {
-        console.log("Backend wake-up failed");
-      }
-    };
+  //       if (!response.ok) {
+  //         throw new Error("Ping failed");
+  //       }
 
-    wakeUpBackend();
-  }, []);
+  //       console.log("Gateway awake");
+  //     } catch (error) {
+  //       console.log("Backend wake-up failed");
+  //     }
+  //   };
+
+  //   wakeUpBackend();
+  // }, []);
 
   return (
     <div className="relative min-h-screen bg-goth-black selection:bg-goth-blood selection:text-white">
