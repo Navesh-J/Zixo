@@ -1,6 +1,5 @@
 package com.zixo.api_gateway;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -12,10 +11,9 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 
 @Configuration
-@RequiredArgsConstructor
 public class PingRouter {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient webClient = WebClient.builder().build();
 
     @Bean
     public RouterFunction<ServerResponse> pingRoute() {
@@ -23,31 +21,27 @@ public class PingRouter {
         return route(GET("/ping"), request ->
 
                 Mono.when(
-                                webClientBuilder.build()
-                                        .get()
-                                        .uri("http://auth-service/ping")
+                                webClient.get()
+                                        .uri("https://auth-service-6c0q.onrender.com/ping")
                                         .retrieve()
                                         .bodyToMono(String.class),
 
-                                webClientBuilder.build()
-                                        .get()
-                                        .uri("http://product-service/ping")
+                                webClient.get()
+                                        .uri("https://product-service-y01r.onrender.com/ping")
                                         .retrieve()
                                         .bodyToMono(String.class),
 
-                                webClientBuilder.build()
-                                        .get()
-                                        .uri("http://order-service/ping")
+                                webClient.get()
+                                        .uri("https://order-service-iyqj.onrender.com/ping")
                                         .retrieve()
                                         .bodyToMono(String.class),
 
-                                webClientBuilder.build()
-                                        .get()
-                                        .uri("http://inventory-service/ping")
+                                webClient.get()
+                                        .uri("https://inventory-service-9zoo.onrender.com/ping")
                                         .retrieve()
                                         .bodyToMono(String.class)
                         )
-                        .onErrorResume(error -> Mono.empty()) // ignore failures
+                        .onErrorResume(error -> Mono.empty()) // ignore cold-start failures
                         .then(ServerResponse.ok().bodyValue("All services pinged"))
         );
     }
