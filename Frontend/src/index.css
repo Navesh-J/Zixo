@@ -8,7 +8,7 @@
   --color-goth-steel: #1a1a1a;
 
   --font-heading: "Cinzel", serif;
-  --font-cyber: "JetBrains Mono", monospace;
+  --font-cyber: "Orbitron", monospace;
 
   @keyframes scanline {
     0% { transform: translateY(-100%); }

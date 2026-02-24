@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, Link} from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 
@@ -27,13 +27,14 @@ import GuestRoute from "./routes/GuestRoute";
 
 import { useAuth } from "./context/AuthContext";
 
+// 🛸 TRANSITION WRAPPER
 const PageWrapper = ({ children }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -10 }}
     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    className="relative z-10 pt-2 pb-2 px-4 md:px-6 w-full max-w-400 mx-auto min-h-screen"
+    className="relative z-10 pt-2 pb-2 px-4 md:px-6 w-full mx-auto min-h-screen"
   >
     {children}
   </motion.div>
@@ -44,38 +45,18 @@ function App() {
   const { user, isAuthenticated } = useAuth();
   const [ready, setReady] = useState(false);
 
+  // 1. INITIALIZATION CHECK (COLD START HANDLER)
   if (!ready) {
     return <WakeLoader onReady={() => setReady(true)} />;
   }
 
-  // const API_BASE_URL =
-  //   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-
-  // useEffect(() => {
-  //   const wakeUpBackend = async () => {
-  //     try {
-  //       const response = await fetch(`${API_BASE_URL}/ping`);
-
-  //       if (!response.ok) {
-  //         throw new Error("Ping failed");
-  //       }
-
-  //       console.log("Gateway awake");
-  //     } catch (error) {
-  //       console.log("Backend wake-up failed");
-  //     }
-  //   };
-
-  //   wakeUpBackend();
-  // }, []);
-
   return (
-    <div className="relative min-h-screen bg-goth-black selection:bg-goth-blood selection:text-white">
-      {/* 🔮 CYBER EFFECTS */}
+    <div className="relative min-h-screen bg-goth-black selection:bg-goth-blood selection:text-white overflow-x-hidden">
+      {/* 🔮 TERMINAL ATMOSPHERE */}
       <div className="scanline" />
       <div className="fixed inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_50%_50%,rgba(20,20,20,1)_0%,rgba(5,5,5,1)_100%)]" />
 
-      {/* Navbar sits on top */}
+      {/* NAVBAR LAYER */}
       <div className="relative z-50">
         <LayoutSwitcher />
       </div>
@@ -83,7 +64,7 @@ function App() {
       <AuthGate>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            {/* 🌍 PUBLIC */}
+            {/* 🌍 CITIZEN SECTOR (PUBLIC/USER) */}
             <Route
               path="/"
               element={
@@ -109,7 +90,7 @@ function App() {
               }
             />
 
-            {/* 👻 GUEST */}
+            {/* 👻 GUEST ACCESS */}
             <Route
               path="/login"
               element={
@@ -131,7 +112,7 @@ function App() {
               }
             />
 
-            {/* 👤 USER */}
+            {/* 👤 AUTHENTICATED USER ROUTES */}
             <Route
               path="/cart"
               element={
@@ -173,7 +154,7 @@ function App() {
               }
             />
 
-            {/* 🏪 SELLER */}
+            {/* 🏪 MERCHANT TERMINAL (SELLER) */}
             <Route
               path="/seller"
               element={
@@ -224,18 +205,24 @@ function App() {
               />
             </Route>
 
-            {/* 🛑 FALLBACK */}
+            {/* 🛑 VOID FALLBACK */}
             <Route
               path="*"
               element={
                 <PageWrapper>
-                  <div className="h-[60vh] flex flex-col items-center justify-center text-center">
-                    <h1 className="font-heading text-6xl text-goth-blood mb-4 tracking-[0.2em]">
-                      VOID
+                  <div className="h-[70vh] flex flex-col items-center justify-center text-center">
+                    <h1 className="font-heading text-8xl text-goth-blood mb-4 tracking-[0.3em] blur-[2px] animate-pulse">
+                      404
                     </h1>
-                    <p className="text-zinc-500 uppercase tracking-widest text-sm">
-                      The path you seek does not exist in this realm.
+                    <p className="text-zinc-500 uppercase tracking-widest text-xs font-cyber">
+                      Data_Link_Severed // Path_Not_Found
                     </p>
+                    <Link
+                      to="/"
+                      className="mt-8 text-white border border-white px-6 py-2 hover:bg-white hover:text-black transition-all font-heading text-[10px] tracking-widest"
+                    >
+                      RETURN_TO_UPLINK
+                    </Link>
                   </div>
                 </PageWrapper>
               }
