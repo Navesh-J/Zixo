@@ -68,7 +68,7 @@ function ProductCard({ product }) {
         </div>
 
         <p className="font-cyber text-[10px] text-zinc-500 line-clamp-2 leading-relaxed uppercase tracking-widest">
-          // REF_DATA: {product.productDescription}
+          // {product.productDescription}
         </p>
 
         <div className="flex items-center justify-between pt-4 border-t border-goth-steel/30">
